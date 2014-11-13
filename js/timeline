@@ -1,0 +1,133 @@
+// to find completed tasks we
+// are building an SQL statement that
+// uses the ids collected from the
+// Google Spreadsheet
+d3.json('https://ds-ec2.scraperwiki.com/3grrlc8/pchhes1jjv0k8fi/sql?q=select * from crowdsourced_data', function(error, json) {
+      if (error) return ('Error, my friend:' + error);
+      data = json;
+
+      // parsing json
+      var completedList = jsonPath.eval(data, '$..docID');
+
+      // function to count how many times
+      // a document has been respondede
+  	  function countInArray(array, index) {
+  	    var count = 0;
+  	    for (var i = 0; i < array.length; i++) {
+  	        if (array[i] === index) {
+  	            count++;
+  	        }
+  	    }
+          return count;
+        }
+
+      // creating another function for redundancy
+      // and using the function above as input
+      // and creating an array only with the
+      // redundant ones
+  	  function checkRedundancy(sourceArray, storeArray, redundancy) {
+  	      for (i = 0; i < sourceArray.length; i++) {
+  	  	    count = countInArray(sourceArray, sourceArray[i]);
+  		    if (count >= redundancy) {
+  			    storeArray.push(sourceArray[i]);
+  		    }
+  	    }
+  	  }
+
+      // getting only the unique values of the array
+       Array.prototype.contains = function(v) {
+           for(var i = 0; i < this.length; i++) {
+               if(this[i] === v) return true;
+           }
+           return false;
+       };
+
+       Array.prototype.unique = function() {
+           var arr = [];
+           for(var i = 0; i < this.length; i++) {
+               if(!arr.contains(this[i])) {
+                   arr.push(this[i]);
+               }
+           }
+           return arr;
+       }
+
+      var completedListRedundant = [];
+      var redundancyLevel = 1;
+      checkRedundancy(completedList, completedListRedundant, redundancyLevel);
+
+      // getting only the unique ones
+      var uniqueIDs = completedListRedundant.unique();
+	    completedList = uniqueIDs.join();
+
+      // building a query url
+      var completedUrl = 'https://ds-ec2.scraperwiki.com/3grrlc8/pchhes1jjv0k8fi/sql?q=select * from cap_appeals_list where new_id in (' + completedList + ')';
+      var incompleteUrl = 'https://ds-ec2.scraperwiki.com/3grrlc8/pchhes1jjv0k8fi/sql?q=select * from cap_appeals_list where new_id not in (' + completedList + ')';
+
+      // sanity check
+      console.log('SQL completed URL: ' + completedUrl);
+      console.log('SQL incompleted URL: ' + incompleteUrl);
+
+      // generating the cards for the CAP appeals
+      // that have to be completed
+      d3.json(incompleteUrl, function(error, json) {
+       if (error) return console.log('Error, my friend:' + error);
+       data = json;
+
+       // function to randomly select 20 entries
+       function getRandomSubarray(arr, size) {
+          var shuffled = arr.slice(0), i = arr.length, temp, index;
+            while (i--) {
+              index = Math.floor((i + 1) * Math.random());
+              temp = shuffled[index];
+              shuffled[index] = shuffled[i];
+              shuffled[i] = temp;
+            }
+          return shuffled.slice(0, size);
+        }
+
+       var dataSubset = getRandomSubarray(data, 20);
+
+       // parsing the json
+       var capID, docName, docType, docUrl;
+       capID = jsonPath.eval(dataSubset, '$..new_id');
+       docName = jsonPath.eval(dataSubset, '$..document_name');
+       // docType = jsonPath.eval(dataSubset, '$..appeal_type');
+       docUrl = jsonPath.eval(dataSubset, '$..url');
+
+
+       // iterating over the id list and creating
+       // a box in the html canvas
+       for (i = 0; i < capID.length; i++) {
+
+         // variable for container
+         var containerBegin = '<div class="col-xs-12 col-md-3"><div class="tile tile-hot">';
+         var containerEnd = '</div></div>';
+
+         // variable with the link
+         var linkDownload = '<a class="btn btn-primary btn-large btn-block" href="' +
+                            docUrl[i] + '" target="_blank">' +
+                            '<span class="fui-link"></span> ' +
+                            'Download Document</a>';
+
+         // variable with the document title
+         var truncatedName = docName[i].substring(0,33);
+         var title = '<p>' + '<strong>Title: </strong>' + truncatedName + ' (...)</p>';
+
+         // variable with the document type
+         // var type = '<p>' + '<span class="fui-info-circle"></span> ' + docType[i] + '</p>';
+
+         // varibale with the document id
+         var id = '<p style="font-size: 18px;">Document code: ' + '<strong>'+ capID[i] + '</strong>' + '</p>';
+
+         // input data
+         // var linkInput = '<a class="btn btn-primary btn-large btn-block" style="background-color: #f2645a;" href="https://docs.google.com/forms/d/1nqzDD2if5-qlz0wApx0gds1tHm_Pqev2lwrvI3Xu0Kk/viewform" target="_blank"><span class="fui-check"></span> Input Data</a>';
+
+         var linkInput = '<a class="btn btn-primary btn-large btn-block" style="background-color: #f2645a;" href="' + 'https://docs.google.com/forms/d/1nqzDD2if5-qlz0wApx0gds1tHm_Pqev2lwrvI3Xu0Kk/viewform?entry.1160896575=' + capID[i] +'&entry.1582946825&entry.1055655003&entry.2104455241&entry.800407170&entry.747710477&entry.456650475&entry.852941676&entry.179322994&entry.1864679336&entry.353843504&entry.1994869660&entry.1466922649&entry.325137311&entry.1354535368&entry.833640584&entry.1177885334' + '" target="_blank"><span class="fui-check"></span> Input Data</a>';
+
+         // generating the cards
+         var doc = document.getElementById('capTiles');
+         doc.innerHTML += containerBegin + title + id + linkDownload + linkInput + containerEnd;
+         };
+      });
+});
