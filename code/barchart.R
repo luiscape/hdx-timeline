@@ -6,7 +6,7 @@ library(RCurl)
 library(reshape2)
 
 # sw deploy function
-onSw <- function(d = F, b = '~/tool/') {
+onSw <- function(d = T, b = '~/tool/') {
   if (d == T) return(b)
   else return('')
 }
@@ -48,4 +48,3 @@ out <- dcast(totals, date ~ variable)
 
 # Sotoring output
 writeTables(out, 'chages_type', 'scraperwiki')
-
