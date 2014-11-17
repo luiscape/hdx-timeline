@@ -13,8 +13,11 @@
 	<title>Latest Activity on HDX</title>
 </head>
 <body>
-	<header>
-		<h1>Latest Activity on HDX</h1>
+	<header id="chart-container">
+		<div>
+			<h1 class="title-header">Latest Activity on HDX</h1>
+			<div id="timeline-bar-chart"></div>
+		</div>
 	</header>
 
 	<section id="cd-timeline" class="cd-container">
@@ -34,6 +37,15 @@
 
 <!-- functionality scripts -->
 <script type="text/javascript" src="js/dataset.js"></script>
+
+<!-- d3 + dependencies -->
+<script type="text/javascript" src="js/c3.min.js"></script>
+<link rel="styleshet" href="css/c3.css"></script>
+<script type="text/javascript" src="js/d3.min.js"></script>
+
+<!-- bar chart -->
+<script type="text/javascript" src="js/barchart.js"></script>
+<link rel="stylesheet" href="css/barchart.css"></script>
 
 </body>
 </html>
